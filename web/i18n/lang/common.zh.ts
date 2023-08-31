@@ -317,6 +317,7 @@ const translation = {
     emptyTip: ' 数据集尚未关联，请前往应用程序或插件完成关联。',
     viewDoc: '查看文档',
     relatedApp: '个关联应用',
+    QADocuments: '问答文档',
   },
   voiceInput: {
     speaking: '现在讲...',

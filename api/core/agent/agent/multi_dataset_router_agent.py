@@ -49,24 +49,14 @@ class MultiDatasetRouterAgent(OpenAIFunctionsAgent):
         """
         if len(self.tools) == 0:
             return AgentFinish(return_values={"output": ''}, log='')
-        elif len(self.tools) == 1:
-            tool = next(iter(self.tools))
-            tool = cast(DatasetRetrieverTool, tool)
-            rst = tool.run(tool_input={'query': kwargs['input']})
-            return AgentFinish(return_values={"output": rst}, log=rst)
+
 
         if intermediate_steps:
             _, observation = intermediate_steps[-1]
             return AgentFinish(return_values={"output": observation}, log=observation)
 
         try:
-            agent_decision = super().plan(intermediate_steps, callbacks, **kwargs)
-            if isinstance(agent_decision, AgentAction):
-                tool_inputs = agent_decision.tool_input
-                if isinstance(tool_inputs, dict) and 'query' in tool_inputs:
-                    tool_inputs['query'] = kwargs['input']
-                    agent_decision.tool_input = tool_inputs
-            return agent_decision
+            return super().plan(intermediate_steps, callbacks, **kwargs)
         except Exception as e:
             new_exception = self.model_instance.handle_exceptions(e)
             raise new_exception

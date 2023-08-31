@@ -30,6 +30,7 @@ class Dataset(db.Model):
     data_source_type = db.Column(db.String(255))
     indexing_technique = db.Column(db.String(255), nullable=True)
     index_struct = db.Column(db.Text, nullable=True)
+    qa_index_struct = db.Column(db.Text, nullable=True)
     created_by = db.Column(UUID, nullable=False)
     created_at = db.Column(db.DateTime, nullable=False,
                            server_default=db.text('CURRENT_TIMESTAMP(0)'))
@@ -51,6 +52,10 @@ class Dataset(db.Model):
     @property
     def index_struct_dict(self):
         return json.loads(self.index_struct) if self.index_struct else None
+    
+    @property
+    def qa_index_struct_dict(self):
+        return json.loads(self.qa_index_struct) if self.qa_index_struct else None
 
     @property
     def created_by_account(self):
@@ -445,3 +450,32 @@ class Embedding(db.Model):
 
     def get_embedding(self) -> list[float]:
         return pickle.loads(self.embedding)
+
+
+class QADocument(db.Model):
+    __tablename__ = 'qa_document'
+    __table_args__ = (
+        db.PrimaryKeyConstraint('id', name='qa_document_pkey'),
+        db.Index('qa_document_dataset_id_idx', 'dataset_id')
+    )
+
+    # initial fields
+    id = db.Column(UUID, nullable=False,
+                   server_default=db.text('uuid_generate_v4()'))
+    tenant_id = db.Column(UUID, nullable=False)
+    dataset_id = db.Column(UUID, nullable=False)
+    position = db.Column(db.Integer, nullable=False)
+    
+    answer = db.Column(db.Text, nullable=False)
+    question = db.Column(db.Text, nullable=False)
+    created_at = db.Column(db.DateTime, nullable=False,
+                           server_default=db.text('CURRENT_TIMESTAMP(0)'))
+    updated_at = db.Column(db.DateTime, nullable=False,
+                           server_default=db.text('CURRENT_TIMESTAMP(0)'))
+    enabled = db.Column(db.Boolean, nullable=False,
+                        server_default=db.text('true'))
+    error = db.Column(db.Text, nullable=True)
+    
+    @property
+    def dataset(self):
+        return db.session.query(Dataset).filter(Dataset.id == self.dataset_id).one_or_none()

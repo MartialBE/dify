@@ -399,3 +399,26 @@ export enum DocForm {
   TEXT = 'text_model',
   QA = 'qa_model',
 }
+
+export type QADocumentDetail = {
+  id: string
+  position: number
+  answer: string
+  question: string
+  error?: string
+  enabled: boolean
+  created_at: number
+}
+
+export type QADocumentListResponse = {
+  data: QADocumentDetail[]
+  has_more: boolean
+  total: number
+  page: number
+  limit: number
+}
+
+export type QADocumentUpdator = {
+  answer: string
+  question: string
+}

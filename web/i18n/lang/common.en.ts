@@ -317,6 +317,7 @@ const translation = {
     emptyTip: 'The data set has not been associated, please go to the application or plug-in to complete the association.',
     viewDoc: 'View documentation',
     relatedApp: 'linked apps',
+    QADocuments: 'QA Documents',
   },
   voiceInput: {
     speaking: 'Speak now...',

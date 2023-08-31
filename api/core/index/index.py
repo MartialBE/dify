@@ -14,6 +14,8 @@ from core.model_providers.providers.openai_provider import OpenAIProvider
 from models.dataset import Dataset
 from models.provider import Provider, ProviderType
 
+from core.index.qa_vector_index.vector_index import VectorIndex as QAVectorIndex
+
 
 class IndexBuilder:
     @classmethod
@@ -49,6 +51,22 @@ class IndexBuilder:
     def get_default_high_quality_index(cls, dataset: Dataset):
         embeddings = OpenAIEmbeddings(openai_api_key=' ')
         return VectorIndex(
+            dataset=dataset,
+            config=current_app.config,
+            embeddings=embeddings
+        )
+
+    @classmethod
+    def get_qa_index(cls, dataset: Dataset):
+        embedding_model = ModelFactory.get_embedding_model(
+            tenant_id=dataset.tenant_id,
+            model_provider_name=dataset.embedding_model_provider,
+            model_name=dataset.embedding_model
+        )
+
+        embeddings = CacheEmbedding(embedding_model)
+
+        return QAVectorIndex(
             dataset=dataset,
             config=current_app.config,
             embeddings=embeddings

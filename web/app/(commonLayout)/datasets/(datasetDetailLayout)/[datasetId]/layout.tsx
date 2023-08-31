@@ -105,6 +105,8 @@ const DatasetDetailLayout: FC<IAppDetailLayoutProps> = (props) => {
 
   const navigation = [
     { name: t('common.datasetMenus.documents'), href: `/datasets/${datasetId}/documents`, icon: DocumentTextIcon, selectedIcon: DocumentTextSolidIcon },
+    { name: t('common.datasetMenus.QADocuments'), href: `/datasets/${datasetId}/qa_documents`, icon: DocumentTextIcon, selectedIcon: DocumentTextSolidIcon },
+
     { name: t('common.datasetMenus.hitTesting'), href: `/datasets/${datasetId}/hitTesting`, icon: TargetIcon, selectedIcon: TargetSolidIcon },
     // { name: 'api & webhook', href: `/datasets/${datasetId}/api`, icon: CommandLineIcon, selectedIcon: CommandLineSolidIcon },
     { name: t('common.datasetMenus.settings'), href: `/datasets/${datasetId}/settings`, icon: Cog8ToothIcon, selectedIcon: Cog8ToothSolidIcon },

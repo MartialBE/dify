@@ -5,7 +5,7 @@ from langchain.schema import Document
 
 from core.index.index import IndexBuilder
 
-from models.dataset import Dataset, DocumentSegment
+from models.dataset import Dataset, DocumentSegment, QADocument
 
 
 class VectorService:
@@ -67,3 +67,42 @@ class VectorService:
             kw_index.create_segment_keywords(segment.index_node_id, keywords)
         else:
             kw_index.add_texts([document])
+
+    @classmethod
+    def create_qa_document_vector(cls, qa_document: QADocument, dataset: Dataset):
+        document = Document(
+            page_content=qa_document.question,
+            metadata={
+                "doc_id": qa_document.id,
+                "document_id": qa_document.id,
+                "dataset_id": qa_document.dataset_id,
+                "qa_answer": qa_document.answer,
+            }
+        )
+
+        # save vector index
+        index = IndexBuilder.get_qa_index(dataset)
+        if index:
+            index.add_texts([document], duplicate_check=True)
+            
+    @classmethod
+    def update_qa_document_vector(cls, qa_document: QADocument, dataset: Dataset):
+        vector_index = IndexBuilder.get_qa_index(dataset)
+        vector_index.delete_by_document_id(qa_document.id)
+        
+        document = Document(
+            page_content=qa_document.question,
+            metadata={
+                "doc_id": qa_document.id,
+                "document_id": qa_document.id,
+                "dataset_id": qa_document.dataset_id,
+                "qa_answer": qa_document.answer,
+            }
+        )
+        
+        vector_index.add_texts([document], duplicate_check=True)
+        
+    @classmethod
+    def delete_qa_document_vector(cls, qa_document: QADocument, dataset: Dataset):
+        vector_index = IndexBuilder.get_qa_index(dataset)
+        vector_index.delete_by_document_id(qa_document.id)
