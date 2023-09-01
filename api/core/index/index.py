@@ -13,6 +13,7 @@ from core.model_providers.models.llm.openai_model import OpenAIModel
 from core.model_providers.providers.openai_provider import OpenAIProvider
 from models.dataset import Dataset
 from models.provider import Provider, ProviderType
+from models.model import App
 
 from core.index.qa_vector_index.vector_index import VectorIndex as QAVectorIndex
 
@@ -57,17 +58,17 @@ class IndexBuilder:
         )
 
     @classmethod
-    def get_qa_index(cls, dataset: Dataset):
+    def get_qa_index(cls, app: App):
         embedding_model = ModelFactory.get_embedding_model(
-            tenant_id=dataset.tenant_id,
-            model_provider_name=dataset.embedding_model_provider,
-            model_name=dataset.embedding_model
+            tenant_id=app.tenant_id,
+            model_provider_name=app.app_model_config.embedding_model_provider,
+            model_name=app.app_model_config.embedding_model
         )
 
         embeddings = CacheEmbedding(embedding_model)
 
         return QAVectorIndex(
-            dataset=dataset,
+            app_config=app.app_model_config,
             config=current_app.config,
             embeddings=embeddings
         )

@@ -5,20 +5,21 @@ from langchain.embeddings.base import Embeddings
 
 from core.index.qa_vector_index.base import BaseVectorIndex
 from extensions.ext_database import db
-from models.dataset import Dataset, Document
+from models.model import AppModelConfig
+from langchain.schema import Document
 
 
 class VectorIndex:
-    def __init__(self, dataset: Dataset, config: dict, embeddings: Embeddings):
-        self._dataset = dataset
+    def __init__(self, app_config: AppModelConfig, config: dict, embeddings: Embeddings):
+        self._app_config = app_config
         self._embeddings = embeddings
-        self._vector_index = self._init_vector_index(dataset, config, embeddings)
+        self._vector_index = self._init_vector_index(app_config, config, embeddings)
 
-    def _init_vector_index(self, dataset: Dataset, config: dict, embeddings: Embeddings) -> BaseVectorIndex:
+    def _init_vector_index(self, app_config: AppModelConfig, config: dict, embeddings: Embeddings) -> BaseVectorIndex:
         vector_type = config.get('VECTOR_STORE')
 
-        if self._dataset.qa_index_struct_dict:
-            vector_type = self._dataset.qa_index_struct_dict['type']
+        if self._app_config.qa_index_struct_dict:
+            vector_type = self._app_config.qa_index_struct_dict['type']
 
         if not vector_type:
             raise ValueError(f"Vector store must be specified.")
@@ -27,7 +28,7 @@ class VectorIndex:
             from core.index.qa_vector_index.weaviate_vector_index import WeaviateVectorIndex, WeaviateConfig
 
             return WeaviateVectorIndex(
-                dataset=dataset,
+                app_config=app_config,
                 config=WeaviateConfig(
                     endpoint=config.get('WEAVIATE_ENDPOINT'),
                     api_key=config.get('WEAVIATE_API_KEY'),
@@ -39,7 +40,7 @@ class VectorIndex:
             from core.index.qa_vector_index.qdrant_vector_index import QdrantVectorIndex, QdrantConfig
 
             return QdrantVectorIndex(
-                dataset=dataset,
+                app_config=app_config,
                 config=QdrantConfig(
                     endpoint=config.get('QDRANT_URL'),
                     api_key=config.get('QDRANT_API_KEY'),
@@ -51,9 +52,9 @@ class VectorIndex:
             raise ValueError(f"Vector store {config.get('VECTOR_STORE')} is not supported.")
 
     def add_texts(self, texts: list[Document], **kwargs):
-        if not self._dataset.qa_index_struct_dict:
+        if not self._app_config.qa_index_struct_dict:
             self._vector_index.create(texts, **kwargs)
-            self._dataset.qa_index_struct = json.dumps(self._vector_index.to_index_struct())
+            self._app_config.qa_index_struct = json.dumps(self._vector_index.to_index_struct())
             db.session.commit()
             return
 

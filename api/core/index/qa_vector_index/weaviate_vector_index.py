@@ -10,7 +10,8 @@ from pydantic import BaseModel, root_validator
 from core.index.base import BaseIndex
 from core.index.qa_vector_index.base import BaseVectorIndex
 from core.vector_store.weaviate_vector_store import WeaviateVectorStore
-from models.dataset import Dataset
+# from models.dataset import Dataset
+from models.model import AppModelConfig
 
 
 class WeaviateConfig(BaseModel):
@@ -26,8 +27,8 @@ class WeaviateConfig(BaseModel):
 
 
 class WeaviateVectorIndex(BaseVectorIndex):
-    def __init__(self, dataset: Dataset, config: WeaviateConfig, embeddings: Embeddings):
-        super().__init__(dataset, embeddings)
+    def __init__(self, app_config: AppModelConfig, config: WeaviateConfig, embeddings: Embeddings):
+        super().__init__(app_config, embeddings)
         self._client = self._init_client(config)
 
     def _init_client(self, config: WeaviateConfig) -> weaviate.Client:
@@ -60,22 +61,22 @@ class WeaviateVectorIndex(BaseVectorIndex):
     def get_type(self) -> str:
         return 'weaviate'
 
-    def get_index_name(self, dataset: Dataset) -> str:
-        if self.dataset.qa_index_struct_dict:
-            class_prefix: str = self.dataset.qa_index_struct_dict['vector_store']['class_prefix']
+    def get_index_name(self, app_config: AppModelConfig) -> str:
+        if self.app_config.qa_index_struct_dict:
+            class_prefix: str = self.app_config.qa_index_struct_dict['vector_store']['class_prefix']
             if not class_prefix.endswith('_qa'):
                 # original class_prefix
                 class_prefix += '_qa'
 
             return class_prefix
 
-        dataset_id = dataset.id
-        return "Vector_index_" + dataset_id.replace("-", "_") + '_qa'
+        app_id = app_config.app_id
+        return "Vector_index_" + app_id.replace("-", "_") + '_qa'
 
     def to_index_struct(self) -> dict:
         return {
             "type": self.get_type(),
-            "vector_store": {"class_prefix": self.get_index_name(self.dataset)}
+            "vector_store": {"class_prefix": self.get_index_name(self.app_config)}
         }
 
     def create(self, texts: list[Document], **kwargs) -> BaseIndex:
@@ -84,7 +85,7 @@ class WeaviateVectorIndex(BaseVectorIndex):
             texts,
             self._embeddings,
             client=self._client,
-            index_name=self.get_index_name(self.dataset),
+            index_name=self.get_index_name(self.app_config),
             uuids=uuids,
             by_text=False
         )
@@ -96,13 +97,13 @@ class WeaviateVectorIndex(BaseVectorIndex):
         if self._vector_store:
             return self._vector_store
 
-        attributes = ['doc_id', 'document_id', 'dataset_id', 'qa_answer']
+        attributes = ['doc_id', 'document_id', 'app_id', 'qa_answer']
         if self._is_origin():
             attributes = ['doc_id']
 
         return WeaviateVectorStore(
             client=self._client,
-            index_name=self.get_index_name(self.dataset),
+            index_name=self.get_index_name(self.app_config),
             text_key='text',
             embedding=self._embeddings,
             attributes=attributes,
@@ -114,7 +115,7 @@ class WeaviateVectorIndex(BaseVectorIndex):
 
     def delete_by_document_id(self, document_id: str):
         if self._is_origin():
-            self.recreate_dataset(self.dataset)
+            self.recreate_dataset(self.app_config)
             return
 
         vector_store = self._get_vector_store()
@@ -127,8 +128,8 @@ class WeaviateVectorIndex(BaseVectorIndex):
         })
 
     def _is_origin(self):
-        if self.dataset.index_struct_dict:
-            class_prefix: str = self.dataset.index_struct_dict['vector_store']['class_prefix']
+        if self.app_config.qa_index_struct_dict:
+            class_prefix: str = self.app_config.qa_index_struct_dict['vector_store']['class_prefix']
             if not class_prefix.endswith('_qa'):
                 # original class_prefix
                 return True

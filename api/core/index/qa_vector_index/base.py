@@ -10,14 +10,13 @@ from weaviate import UnexpectedStatusCodeException
 
 from core.index.base import BaseIndex
 from extensions.ext_database import db
-from models.dataset import Dataset, DocumentSegment
-from models.dataset import QADocument
+from models.model import AppModelConfig, AppQADocument
 
 
 class BaseVectorIndex(BaseIndex):
 
-    def __init__(self, dataset: Dataset, embeddings: Embeddings):
-        super().__init__(dataset)
+    def __init__(self, app_config: AppModelConfig, embeddings: Embeddings):
+        self.app_config = app_config
         self._embeddings = embeddings
         self._vector_store = None
 
@@ -25,7 +24,7 @@ class BaseVectorIndex(BaseIndex):
         raise NotImplementedError
 
     @abstractmethod
-    def get_index_name(self, dataset: Dataset) -> str:
+    def get_index_name(self, app_config: AppModelConfig) -> str:
         raise NotImplementedError
 
     @abstractmethod
@@ -82,7 +81,7 @@ class BaseVectorIndex(BaseIndex):
 
     def add_texts(self, texts: list[Document], **kwargs):
         if self._is_origin():
-            self.recreate_dataset(self.dataset)
+            self.recreate_dataset(self.app_config)
 
         vector_store = self._get_vector_store()
         vector_store = cast(self._get_vector_store_class(), vector_store)
@@ -101,7 +100,7 @@ class BaseVectorIndex(BaseIndex):
 
     def delete_by_ids(self, ids: list[str]) -> None:
         if self._is_origin():
-            self.recreate_dataset(self.dataset)
+            self.recreate_dataset(self.app_config)
             return
 
         vector_store = self._get_vector_store()
@@ -119,8 +118,8 @@ class BaseVectorIndex(BaseIndex):
     def _is_origin(self):
         return False
 
-    def recreate_dataset(self, dataset: Dataset):
-        logging.info(f"Recreating dataset {dataset.id}")
+    def recreate_dataset(self, app_config: AppModelConfig):
+        logging.info(f"Recreating app_config {app_config.id}")
 
         try:
             self.delete()
@@ -129,9 +128,9 @@ class BaseVectorIndex(BaseIndex):
                 # 400 means index not exists
                 raise e
 
-        qa_documents = db.session.query(QADocument).filter(
-            QADocument.dataset_id == dataset.id,
-            QADocument.enabled == True,
+        qa_documents = db.session.query(AppQADocument).filter(
+            AppQADocument.app_id == app_config.app_id,
+            AppQADocument.enabled == True,
         ).all()
 
         documents = []
@@ -141,31 +140,31 @@ class BaseVectorIndex(BaseIndex):
                 metadata={
                     "doc_id": qa_document.id,
                     "document_id": qa_document.id,
-                    "dataset_id": qa_document.dataset_id,
+                    "app_id": qa_document.app_id,
                     "qa_answer": qa_document.answer,
                 }
             )
             documents.append(document)
 
-        origin_index_struct = self.dataset.qa_index_struct[:]
-        self.dataset.qa_index_struct = None
+        origin_index_struct = self.app_config.qa_index_struct[:]
+        self.app_config.qa_index_struct = None
 
         if documents:
             try:
                 self.create(documents)
             except Exception as e:
-                self.dataset.qa_index_struct = origin_index_struct
+                self.app_config.qa_index_struct = origin_index_struct
                 raise e
 
-            dataset.qa_index_struct = json.dumps(self.to_index_struct())
+            app_config.qa_index_struct = json.dumps(self.to_index_struct())
 
         db.session.commit()
 
-        self.dataset = dataset
-        logging.info(f"Dataset {dataset.id} recreate successfully.")
+        self.app_config = app_config
+        logging.info(f"Dataset {app_config.id} recreate successfully.")
 
-    def create_qdrant_dataset(self, dataset: Dataset):
-        logging.info(f"create_qdrant_dataset {dataset.id}")
+    def create_qdrant_dataset(self, app_config: AppModelConfig):
+        logging.info(f"create_qdrant_dataset {app_config.id}")
 
         try:
             self.delete()
@@ -174,9 +173,9 @@ class BaseVectorIndex(BaseIndex):
                 # 400 means index not exists
                 raise e
 
-        qa_documents = db.session.query(QADocument).filter(
-            QADocument.dataset_id == dataset.id,
-            QADocument.enabled == True,
+        qa_documents = db.session.query(AppQADocument).filter(
+            AppQADocument.app_id == app_config.app_id,
+            AppQADocument.enabled == True,
         ).all()
 
         documents = []
@@ -186,7 +185,7 @@ class BaseVectorIndex(BaseIndex):
                 metadata={
                     "doc_id": qa_document.id,
                     "document_id": qa_document.id,
-                    "dataset_id": qa_document.dataset_id,
+                    "app_id": qa_document.app_id,
                     "qa_answer": qa_document.answer,
                 }
             )
@@ -198,14 +197,14 @@ class BaseVectorIndex(BaseIndex):
             except Exception as e:
                 raise e
 
-        logging.info(f"Dataset {dataset.id} recreate successfully.")
+        logging.info(f"Dataset {app_config.id} recreate successfully.")
 
-    def update_qdrant_dataset(self, dataset: Dataset):
-        logging.info(f"update_qdrant_dataset {dataset.id}")
+    def update_qdrant_dataset(self, app_config: AppModelConfig):
+        logging.info(f"update_qdrant_dataset {app_config.id}")
 
-        qa_document = db.session.query(QADocument).filter(
-            QADocument.dataset_id == dataset.id,
-            QADocument.enabled == True,
+        qa_document = db.session.query(AppQADocument).filter(
+            AppQADocument.app_id == app_config.app_id,
+            AppQADocument.enabled == True,
         ).first()
 
 
@@ -215,11 +214,11 @@ class BaseVectorIndex(BaseIndex):
                 if exist:
                     index_struct = {
                         "type": 'qdrant',
-                        "vector_store": {"class_prefix": dataset.qa_index_struct_dict['vector_store']['class_prefix']}
+                        "vector_store": {"class_prefix": app_config.qa_index_struct_dict['vector_store']['class_prefix']}
                     }
-                    dataset.qa_index_struct_dict = json.dumps(index_struct)
+                    app_config.qa_index_struct_dict = json.dumps(index_struct)
                     db.session.commit()
             except Exception as e:
                 raise e
 
-        logging.info(f"Dataset {dataset.id} recreate successfully.")
+        logging.info(f"Dataset {app_config.id} recreate successfully.")

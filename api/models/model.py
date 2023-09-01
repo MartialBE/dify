@@ -90,6 +90,10 @@ class AppModelConfig(db.Model):
     pre_prompt = db.Column(db.Text)
     agent_mode = db.Column(db.Text)
     sensitive_word_avoidance = db.Column(db.Text)
+    
+    embedding_model = db.Column(db.String(255), nullable=True)
+    embedding_model_provider = db.Column(db.String(255), nullable=True)
+    qa_index_struct = db.Column(db.Text, nullable=True)
 
     @property
     def app(self):
@@ -130,6 +134,10 @@ class AppModelConfig(db.Model):
     @property
     def agent_mode_dict(self) -> dict:
         return json.loads(self.agent_mode) if self.agent_mode else {"enabled": False, "strategy": None, "tools": []}
+    
+    @property
+    def qa_index_struct_dict(self):
+        return json.loads(self.qa_index_struct) if self.qa_index_struct else None
 
     def to_dict(self) -> dict:
         return {
@@ -719,3 +727,25 @@ class MessageAgentThought(db.Model):
     created_by_role = db.Column(db.String, nullable=False)
     created_by = db.Column(UUID, nullable=False)
     created_at = db.Column(db.DateTime, nullable=False, server_default=db.func.current_timestamp())
+
+class AppQADocument(db.Model):
+    __tablename__ = 'app_qa_document'
+    __table_args__ = (
+        db.PrimaryKeyConstraint('id', name='app_qa_document_pkey'),
+        db.Index('app_qa_document_app_idx', 'app_id')
+    )
+
+    id = db.Column(UUID, nullable=False,
+                   server_default=db.text('uuid_generate_v4()'))
+    app_id = db.Column(UUID, nullable=False)
+    position = db.Column(db.Integer, nullable=False)
+    
+    answer = db.Column(db.Text, nullable=False)
+    question = db.Column(db.Text, nullable=False)
+    created_at = db.Column(db.DateTime, nullable=False,
+                           server_default=db.text('CURRENT_TIMESTAMP(0)'))
+    updated_at = db.Column(db.DateTime, nullable=False,
+                           server_default=db.text('CURRENT_TIMESTAMP(0)'))
+    enabled = db.Column(db.Boolean, nullable=False,
+                        server_default=db.text('true'))
+    error = db.Column(db.Text, nullable=True)

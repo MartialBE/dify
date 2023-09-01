@@ -7,6 +7,8 @@ from core.index.index import IndexBuilder
 
 from models.dataset import Dataset, DocumentSegment, QADocument
 
+from models.model import App
+
 
 class VectorService:
 
@@ -69,25 +71,25 @@ class VectorService:
             kw_index.add_texts([document])
 
     @classmethod
-    def create_qa_document_vector(cls, qa_document: QADocument, dataset: Dataset):
+    def create_qa_document_vector(cls, qa_document: QADocument, app: App):
         document = Document(
             page_content=qa_document.question,
             metadata={
                 "doc_id": qa_document.id,
                 "document_id": qa_document.id,
-                "dataset_id": qa_document.dataset_id,
+                "app_id": qa_document.app_id,
                 "qa_answer": qa_document.answer,
             }
         )
 
         # save vector index
-        index = IndexBuilder.get_qa_index(dataset)
+        index = IndexBuilder.get_qa_index(app)
         if index:
             index.add_texts([document], duplicate_check=True)
             
     @classmethod
-    def update_qa_document_vector(cls, qa_document: QADocument, dataset: Dataset):
-        vector_index = IndexBuilder.get_qa_index(dataset)
+    def update_qa_document_vector(cls, qa_document: QADocument, app: App):
+        vector_index = IndexBuilder.get_qa_index(app)
         vector_index.delete_by_document_id(qa_document.id)
         
         document = Document(
@@ -95,7 +97,7 @@ class VectorService:
             metadata={
                 "doc_id": qa_document.id,
                 "document_id": qa_document.id,
-                "dataset_id": qa_document.dataset_id,
+                "app_id": qa_document.app_id,
                 "qa_answer": qa_document.answer,
             }
         )
@@ -103,6 +105,6 @@ class VectorService:
         vector_index.add_texts([document], duplicate_check=True)
         
     @classmethod
-    def delete_qa_document_vector(cls, qa_document: QADocument, dataset: Dataset):
-        vector_index = IndexBuilder.get_qa_index(dataset)
+    def delete_qa_document_vector(cls, qa_document: QADocument, app: App):
+        vector_index = IndexBuilder.get_qa_index(app)
         vector_index.delete_by_document_id(qa_document.id)
