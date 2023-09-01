@@ -26,6 +26,7 @@ class PlanningStrategy(str, enum.Enum):
     REACT = 'react'
     FUNCTION_CALL = 'function_call'
     MULTI_FUNCTION_CALL = 'multi_function_call'
+    FAKE = 'fake'
 
 
 class AgentConfiguration(BaseModel):

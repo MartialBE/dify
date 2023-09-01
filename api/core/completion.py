@@ -20,6 +20,7 @@ from core.prompt.prompt_builder import PromptBuilder
 from core.prompt.prompt_template import JinjaPromptTemplate
 from core.prompt.prompts import MORE_LIKE_THIS_GENERATE_PROMPT
 from models.model import App, AppModelConfig, Account, Conversation, Message, EndUser
+from core.index.index import IndexBuilder
 
 
 class Completion:
@@ -93,9 +94,11 @@ class Completion:
         # run agent executor
         agent_execute_result = None
         if agent_executor:
-            should_use_agent = agent_executor.should_use_agent(query)
-            if should_use_agent:
-                agent_execute_result = agent_executor.run(query)
+            agent_execute_result = cls.check_qa_document(app, app_model_config, agent_executor.configuration, query)
+            if not agent_execute_result:
+                should_use_agent = agent_executor.should_use_agent(query)
+                if should_use_agent:
+                    agent_execute_result = agent_executor.run(query)
 
         # run the final llm
         try:
@@ -125,8 +128,9 @@ class Completion:
         # When no extra pre prompt is specified,
         # the output of the agent can be used directly as the main output content without calling LLM again
         fake_response = None
-        if not app_model_config.pre_prompt and agent_execute_result and agent_execute_result.output \
-                and agent_execute_result.strategy not in [PlanningStrategy.ROUTER, PlanningStrategy.REACT_ROUTER]:
+        if (not app_model_config.pre_prompt and agent_execute_result and agent_execute_result.output \
+                and agent_execute_result.strategy not in [PlanningStrategy.ROUTER, PlanningStrategy.REACT_ROUTER]) or \
+                    agent_execute_result.strategy == "fake":
             fake_response = agent_execute_result.output
 
         # get llm prompt
@@ -285,4 +289,31 @@ class Completion:
         final_model_instance.run(
             messages=prompt_messages,
             callbacks=[LLMCallbackHandler(final_model_instance, conversation_message_task)]
+        )
+
+    @classmethod
+    def check_qa_document(cls, app: App, app_model_config: AppModelConfig, agent_configuration, query: str):
+        # 检查是否有QA文档
+        if not app_model_config.qa_index_struct:
+            return
+        
+        fake_response = None
+        
+        # 进行查询
+        vector_index = IndexBuilder.get_qa_index(app)
+        documents = vector_index.search(
+            query,
+            search_type='similarity_score_threshold',
+            search_kwargs={
+                'k': 1
+            }
+        )
+        
+        if not documents:
+            return
+
+        return AgentExecuteResult(
+            output=documents[0].metadata['qa_answer'],
+            strategy=PlanningStrategy.FAKE,
+            configuration=agent_configuration
         )
