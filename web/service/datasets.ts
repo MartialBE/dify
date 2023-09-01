@@ -14,9 +14,6 @@ import type {
   IndexingStatusBatchResponse,
   IndexingStatusResponse,
   ProcessRuleResponse,
-  QADocumentDetail,
-  QADocumentListResponse,
-  QADocumentUpdator,
   RelatedAppResponse,
   SegmentDetailModel,
   SegmentUpdator,
@@ -194,24 +191,4 @@ export const fetchFileIndexingEstimate: Fetcher<FileIndexingEstimateResponse, an
 
 export const fetchNotionPagePreview: Fetcher<{ content: string }, { workspaceID: string; pageID: string; pageType: string }> = ({ workspaceID, pageID, pageType }) => {
   return get(`notion/workspaces/${workspaceID}/pages/${pageID}/${pageType}/preview`) as Promise<{ content: string }>
-}
-
-export const fetchQADocuments: Fetcher<QADocumentListResponse, { datasetId: string; params: { keyword: string; page: number; limit: number; sort?: SortType } }> = ({ datasetId, params }) => {
-  return get(`/datasets/${datasetId}/qa_documents`, { params }) as Promise<QADocumentListResponse>
-}
-
-export const fetchQADocumentDetail: Fetcher<QADocumentDetail, CommonDocReq & { params: { metadata?: MetadataType } }> = ({ datasetId, documentId, params }) => {
-  return get(`/datasets/${datasetId}/qa_documents/${documentId}`, { params }) as Promise<QADocumentDetail>
-}
-
-export const addQADocument: Fetcher<{ data: QADocumentDetail }, { datasetId: string; body: QADocumentUpdator }> = ({ datasetId, body }) => {
-  return post(`/datasets/${datasetId}/qa_documents`, { body }) as Promise<{ data: QADocumentDetail }>
-}
-
-export const updateQADocument: Fetcher<{ data: QADocumentDetail }, { datasetId: string; QAdocumentId: string; body: QADocumentUpdator }> = ({ datasetId, QAdocumentId, body }) => {
-  return put(`/datasets/${datasetId}/qa_documents/${QAdocumentId}`, { body }) as Promise<{ data: QADocumentDetail }>
-}
-
-export const deleteQADocument: Fetcher<CommonResponse, CommonDocReq> = ({ datasetId, documentId }) => {
-  return del(`/datasets/${datasetId}/qa_documents/${documentId}`) as Promise<CommonResponse>
 }

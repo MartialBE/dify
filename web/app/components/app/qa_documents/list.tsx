@@ -18,7 +18,7 @@ import { ToastContext } from '@/app/components/base/toast'
 import type { IndicatorProps } from '@/app/components/header/indicator'
 import Indicator from '@/app/components/header/indicator'
 import { asyncRunSafe } from '@/utils'
-import { deleteQADocument, updateQADocument } from '@/service/datasets'
+import { deleteQADocument, updateQADocument } from '@/service/apps'
 import { type QADocumentDetail, type QADocumentUpdator } from '@/models/datasets'
 import type { CommonResponse } from '@/models/common'
 import { DotsHorizontal, Edit03, HelpCircle, XClose } from '@/app/components/base/icons/src/vender/line/general'
@@ -190,11 +190,11 @@ export const OperationAction: FC<{
   embeddingAvailable: boolean
   doc_id: string
   enabled: boolean
-  datasetId: string
+  appId: string
   onUpdate: (operationName?: string) => void
   scene?: 'list' | 'detail'
   className?: string
-}> = ({ embeddingAvailable, datasetId, doc_id, onUpdate, scene = 'list', className = '' }) => {
+}> = ({ embeddingAvailable, appId, doc_id, onUpdate, scene = 'list', className = '' }) => {
   const [showModal, setShowModal] = useState(false)
   const { notify } = useContext(ToastContext)
   const { t } = useTranslation()
@@ -210,7 +210,7 @@ export const OperationAction: FC<{
         opApi = deleteQADocument
         break
     }
-    const [e] = await asyncRunSafe<CommonResponse>(opApi({ datasetId, documentId: doc_id }) as Promise<CommonResponse>)
+    const [e] = await asyncRunSafe<CommonResponse>(opApi({ appId, QAdocumentId: doc_id }) as Promise<CommonResponse>)
     if (!e)
       notify({ type: 'success', message: t('common.actionMsg.modifiedSuccessfully') })
     else
@@ -270,14 +270,14 @@ type LocalDoc = QADocumentDetail & { percent?: number }
 type IDocumentListProps = {
   embeddingAvailable: boolean
   documents: LocalDoc[]
-  datasetId: string
+  appId: string
   onUpdate: () => void
 }
 
 /**
  * Document list component including basic information
  */
-const DocumentList: FC<IDocumentListProps> = ({ embeddingAvailable, documents = [], datasetId, onUpdate }) => {
+const DocumentList: FC<IDocumentListProps> = ({ embeddingAvailable, documents = [], appId, onUpdate }) => {
   const { t } = useTranslation()
   const router = useRouter()
   const [localDocs, setLocalDocs] = useState<LocalDoc[]>(documents)
@@ -306,7 +306,7 @@ const DocumentList: FC<IDocumentListProps> = ({ embeddingAvailable, documents = 
 
     try {
       eventEmitter?.emit('update-qa')
-      const res = await updateQADocument({ datasetId, QAdocumentId, body: params })
+      const res = await updateQADocument({ appId, QAdocumentId, body: params })
       notify({ type: 'success', message: t('common.actionMsg.modifiedSuccessfully') })
       onCloseModal()
     }
@@ -367,7 +367,7 @@ const DocumentList: FC<IDocumentListProps> = ({ embeddingAvailable, documents = 
               <td>
                 <OperationAction
                   embeddingAvailable={embeddingAvailable}
-                  datasetId={datasetId}
+                  appId={appId}
                   doc_id={doc.id}
                   enabled={doc.enabled}
                   onUpdate={onUpdate}

@@ -40,6 +40,7 @@ const AppDetailLayout: FC<IAppDetailLayoutProps> = (props) => {
     const navs = [
       { name: t('common.appMenus.overview'), href: `/app/${appId}/overview`, icon: ChartBarSquareIcon, selectedIcon: ChartBarSquareSolidIcon },
       isCurrentWorkspaceManager ? { name: t('common.appMenus.promptEng'), href: `/app/${appId}/configuration`, icon: Cog8ToothIcon, selectedIcon: Cog8ToothSolidIcon } : false,
+      isCurrentWorkspaceManager ? { name: t('common.datasetMenus.QADocuments'), href: `/app/${appId}/qa_documents`, icon: Cog8ToothIcon, selectedIcon: Cog8ToothSolidIcon } : false,
       { name: t('common.appMenus.apiAccess'), href: `/app/${appId}/develop`, icon: CommandLineIcon, selectedIcon: CommandLineSolidIcon },
       { name: t('common.appMenus.logAndAnn'), href: `/app/${appId}/logs`, icon: DocumentTextIcon, selectedIcon: DocumentTextSolidIcon },
     ].filter(nav => !!nav)

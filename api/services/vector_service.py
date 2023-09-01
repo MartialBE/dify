@@ -5,9 +5,9 @@ from langchain.schema import Document
 
 from core.index.index import IndexBuilder
 
-from models.dataset import Dataset, DocumentSegment, QADocument
+from models.dataset import Dataset, DocumentSegment
 
-from models.model import App
+from models.model import App, AppQADocument
 
 
 class VectorService:
@@ -71,7 +71,7 @@ class VectorService:
             kw_index.add_texts([document])
 
     @classmethod
-    def create_qa_document_vector(cls, qa_document: QADocument, app: App):
+    def create_qa_document_vector(cls, qa_document: AppQADocument, app: App):
         document = Document(
             page_content=qa_document.question,
             metadata={
@@ -88,7 +88,7 @@ class VectorService:
             index.add_texts([document], duplicate_check=True)
             
     @classmethod
-    def update_qa_document_vector(cls, qa_document: QADocument, app: App):
+    def update_qa_document_vector(cls, qa_document: AppQADocument, app: App):
         vector_index = IndexBuilder.get_qa_index(app)
         vector_index.delete_by_document_id(qa_document.id)
         
@@ -105,6 +105,6 @@ class VectorService:
         vector_index.add_texts([document], duplicate_check=True)
         
     @classmethod
-    def delete_qa_document_vector(cls, qa_document: QADocument, app: App):
+    def delete_qa_document_vector(cls, qa_document: AppQADocument, app: App):
         vector_index = IndexBuilder.get_qa_index(app)
         vector_index.delete_by_document_id(qa_document.id)

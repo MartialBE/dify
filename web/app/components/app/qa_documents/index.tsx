@@ -12,10 +12,10 @@ import Loading from '@/app/components/base/loading'
 import Input from '@/app/components/base/input'
 import Pagination from '@/app/components/base/pagination'
 import { get } from '@/service/base'
-import { fetchQADocuments } from '@/service/datasets'
-import { useDatasetDetailContext } from '@/context/dataset-detail'
+import { fetchQADocuments } from '@/service/apps'
 import Button from '@/app/components/base/button'
-import AddQADocumentModal from '@/app/components/datasets/qa_documents/detail/index'
+import AddQADocumentModal from '@/app/components/app/qa_documents/detail/index'
+import { useAppContext } from '@/context/app-context'
 
 // Custom page count is not currently supported.
 const limit = 15
@@ -23,17 +23,16 @@ const limit = 15
 export const fetcher = (url: string) => get(url, {}, {})
 
 type IDocumentsProps = {
-  datasetId: string
+  appId: string
 }
 
-const QADocuments: FC<IDocumentsProps> = ({ datasetId }) => {
+const QADocuments: FC<IDocumentsProps> = ({ appId }) => {
   const { t } = useTranslation()
   const [searchValue, setSearchValue] = useState<string>('')
   const [currPage, setCurrPage] = React.useState<number>(0)
   const router = useRouter()
-  const { dataset } = useDatasetDetailContext()
+  const { isCurrentWorkspaceManager } = useAppContext()
   const [timerCanRun, setTimerCanRun] = useState(true)
-  const embeddingAvailable = !!dataset?.embedding_available
 
   const query = useMemo(() => {
     return { page: currPage + 1, limit, keyword: searchValue }
@@ -42,7 +41,7 @@ const QADocuments: FC<IDocumentsProps> = ({ datasetId }) => {
   const { data: documentsRes, error, mutate } = useSWR(
     {
       action: 'fetchQADocuments',
-      datasetId,
+      appId,
       params: query,
     },
     apiParams => fetchQADocuments(omit(apiParams, 'action')),
@@ -50,10 +49,6 @@ const QADocuments: FC<IDocumentsProps> = ({ datasetId }) => {
   )
 
   const total = documentsRes?.total || 0
-
-  const routeToDocCreate = () => {
-    router.push(`/datasets/${datasetId}/qa_documents/create`)
-  }
 
   const [showAddQADocumentModal, setShowAddQADocumentModal] = React.useState(false)
   const handleOpenAddQADocumentModal = () => {
@@ -85,7 +80,7 @@ const QADocuments: FC<IDocumentsProps> = ({ datasetId }) => {
             onChange={debounce(setSearchValue, 500)}
             value={searchValue}
           />
-          {embeddingAvailable && (
+          {isCurrentWorkspaceManager && (
             <Button type='primary' onClick={handleOpenAddQADocumentModal} className='!h-8 !text-[13px]'>
               <PlusIcon className='h-4 w-4 mr-2 stroke-current' />
               {t('datasetQADocuments.list.add')}
@@ -95,7 +90,7 @@ const QADocuments: FC<IDocumentsProps> = ({ datasetId }) => {
         {isLoading
           ? <Loading type='app' />
           : total > 0
-            ? <List embeddingAvailable={embeddingAvailable} documents={documentsList || []} datasetId={datasetId} onUpdate={mutate} />
+            ? <List embeddingAvailable={isCurrentWorkspaceManager} documents={documentsList || []} appId={appId} onUpdate={mutate} />
             : 'No QA Documents'
         }
         {/* Show Pagination only if the total is more than the limit */}

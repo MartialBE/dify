@@ -9,7 +9,7 @@ import AutoHeightTextarea from '@/app/components/base/auto-height-textarea/commo
 import { Hash02, XClose } from '@/app/components/base/icons/src/vender/line/general'
 import { ToastContext } from '@/app/components/base/toast'
 import type { QADocumentUpdator } from '@/models/datasets'
-import { addQADocument } from '@/service/datasets'
+import { addQADocument } from '@/service/apps'
 
 type AddQADocumentProps = {
   isShow: boolean
@@ -26,7 +26,7 @@ const AddQADocumentModal: FC<AddQADocumentProps> = ({
   const { notify } = useContext(ToastContext)
   const [question, setQuestion] = useState('')
   const [answer, setAnswer] = useState('')
-  const { datasetId } = useParams()
+  const { appId } = useParams()
   const [loading, setLoading] = useState(false)
 
   const handleCancel = () => {
@@ -47,7 +47,7 @@ const AddQADocumentModal: FC<AddQADocumentProps> = ({
 
     setLoading(true)
     try {
-      await addQADocument({ datasetId, body: params })
+      await addQADocument({ appId, body: params })
       notify({ type: 'success', message: t('common.actionMsg.modifiedSuccessfully') })
       handleCancel()
       onSave()
