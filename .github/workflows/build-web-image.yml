@@ -9,7 +9,7 @@ on:
 
 env:
   # github.repository as <account>/<repo>
-  IMAGE_NAME: dify-web
+  IMAGE_NAME: martialbe/dify-web
 
 jobs:
   build-and-push:
