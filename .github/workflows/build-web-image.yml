@@ -1,4 +1,4 @@
-name: QA API Image
+name: QA WEB Image
 
 on:
   push:
