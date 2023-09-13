@@ -1,8 +1,9 @@
 # Written by YORKI MINAKO🤡
 CONVERSATION_TITLE_PROMPT = """You need to decompose the user's input into "subject" and "intention" in order to accurately figure out what the user's input language actually is. 
-Notice: the language type user using is abundant, can be English, Chinese, Español, Arabic, Japanese, and etc.
+Notice: the language type user use could be diverse, which can be English, Chinese, Español, Arabic, Japanese, French, and etc.
 MAKE SURE your output is the SAME language as the user's input!
 Your output is restricted only to: (Input language) Intention + Subject(short as possible)
+Your output MUST be a valid JSON.
 
 Tip: When the user's question is directed at you (the language model), you can add an emoji to make it more fun.
 
@@ -104,7 +105,7 @@ GENERATOR_QA_PROMPT = (
     'Step 3: Decompose or combine multiple pieces of information and concepts.\n'
     'Step 4: Generate 20 questions and answers based on these key information and concepts.'
     'The questions should be clear and detailed, and the answers should be detailed and complete.\n'
-    "Answer must be the language:{language} and in the following format: Q1:\nA1:\nQ2:\nA2:...\n"
+    "Answer according to the the language:{language} and in the following format: Q1:\nA1:\nQ2:\nA2:...\n"
 )
 
 RULE_CONFIG_GENERATE_TEMPLATE = """Given MY INTENDED AUDIENCES and HOPING TO SOLVE using a language model, please select \

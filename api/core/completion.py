@@ -1,8 +1,7 @@
+import json
 import logging
-import re
-from typing import Optional, List, Union, Tuple
+from typing import Optional, List, Union
 
-from langchain.schema import BaseMessage
 from requests.exceptions import ChunkedEncodingError
 
 from core.agent.agent_executor import AgentExecuteResult, PlanningStrategy
@@ -13,12 +12,12 @@ from core.model_providers.error import LLMBadRequestError
 from core.memory.read_only_conversation_token_db_buffer_shared_memory import \
     ReadOnlyConversationTokenDBBufferSharedMemory
 from core.model_providers.model_factory import ModelFactory
-from core.model_providers.models.entity.message import PromptMessage, to_prompt_messages
+from core.model_providers.models.entity.message import PromptMessage
 from core.model_providers.models.llm.base import BaseLLM
 from core.orchestrator_rule_parser import OrchestratorRuleParser
 from core.prompt.prompt_builder import PromptBuilder
-from core.prompt.prompt_template import JinjaPromptTemplate
 from core.prompt.prompts import MORE_LIKE_THIS_GENERATE_PROMPT
+from models.dataset import DocumentSegment, Dataset, Document
 from models.model import App, AppModelConfig, Account, Conversation, Message, EndUser
 from core.index.index import IndexBuilder
 
@@ -26,7 +25,8 @@ from core.index.index import IndexBuilder
 class Completion:
     @classmethod
     def generate(cls, task_id: str, app: App, app_model_config: AppModelConfig, query: str, inputs: dict,
-                 user: Union[Account, EndUser], conversation: Optional[Conversation], streaming: bool, is_override: bool = False):
+                 user: Union[Account, EndUser], conversation: Optional[Conversation], streaming: bool,
+                 is_override: bool = False, retriever_from: str = 'dev'):
         """
         errors: ProviderTokenNotInitError
         """
@@ -79,7 +79,7 @@ class Completion:
 
         # parse sensitive_word_avoidance_chain
         chain_callback = MainChainGatherCallbackHandler(conversation_message_task)
-        sensitive_word_avoidance_chain = orchestrator_rule_parser.to_sensitive_word_avoidance_chain([chain_callback])
+        sensitive_word_avoidance_chain = orchestrator_rule_parser.to_sensitive_word_avoidance_chain(final_model_instance, [chain_callback])
         if sensitive_word_avoidance_chain:
             query = sensitive_word_avoidance_chain.run(query)
 
@@ -121,7 +121,8 @@ class Completion:
             return
 
     @classmethod
-    def run_final_llm(cls, model_instance: BaseLLM, mode: str, app_model_config: AppModelConfig, query: str, inputs: dict,
+    def run_final_llm(cls, model_instance: BaseLLM, mode: str, app_model_config: AppModelConfig, query: str,
+                      inputs: dict,
                       agent_execute_result: Optional[AgentExecuteResult],
                       conversation_message_task: ConversationMessageTask,
                       memory: Optional[ReadOnlyConversationTokenDBBufferSharedMemory]):
@@ -154,7 +155,6 @@ class Completion:
             callbacks=[LLMCallbackHandler(model_instance, conversation_message_task)],
             fake_response=fake_response
         )
-
         return response
 
     @classmethod

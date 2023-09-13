@@ -1,3 +1,4 @@
+import json
 from typing import Tuple, List, Any, Union, Sequence, Optional, cast
 
 from langchain.agents import OpenAIFunctionsAgent, BaseSingleActionAgent
@@ -49,7 +50,6 @@ class MultiDatasetRouterAgent(OpenAIFunctionsAgent):
         """
         if len(self.tools) == 0:
             return AgentFinish(return_values={"output": ''}, log='')
-
 
         if intermediate_steps:
             _, observation = intermediate_steps[-1]

@@ -1,11 +1,11 @@
 {
   "name": "dify-web",
-  "version": "0.3.19",
+  "version": "0.3.22",
   "private": true,
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "next start",
+    "start": "next dev",
     "lint": "next lint",
     "fix": "next lint --fix",
     "eslint-fix": "eslint --fix",
